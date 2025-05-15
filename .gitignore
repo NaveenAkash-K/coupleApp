@@ -1,0 +1,10 @@
+/.idea
+
+/backend/node_modules
+/backend/.idea
+/backend/package-lock.json
+
+/app/node_modules
+/app/.idea
+/app/.expo
+/app/package-lock.json
