@@ -5,7 +5,6 @@ const User = require("../models/userModel")
 const bcrypt = require("bcrypt");
 const speakeasy = require("speakeasy")
 const {v4: uuidv4} = require("uuid");
-const {nanoid} = require("nanoid");
 
 router.post("/login", async (req, res) => {
     try {
@@ -54,7 +53,8 @@ router.post("/signup", async (req, res) => {
         const otpSecret = speakeasy.generateSecret({length: 20}).base32;
 
         const userId = uuidv4(); // using UUID as _id
-        const inviteId =  nanoid(8).toUpperCase();
+        const {nanoid} = await import('nanoid');
+        const inviteId = nanoid(8).toUpperCase();
 
         const otp = speakeasy.totp({
             secret: otpSecret,
