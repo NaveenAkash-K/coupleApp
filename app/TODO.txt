@@ -1,0 +1,11 @@
+[ ] - Delete photo from memory functionality
+[ ] - Couple Screen statistics UI
+[ ] - Logout functionality
+[ ] - Get additional details in signup
+[ ] - Delete memory functionality
+[ ] - Keep all user details in store except jwt token
+[ ] - Keep the memory timeline scroll to latest date
+[ ] - Pull to refresh invitations
+
+[ ] - Client Web socket for invitations
+[ ] - Pagination on memory timeline

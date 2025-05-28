@@ -2,19 +2,20 @@ import {createStackNavigator} from "@react-navigation/stack";
 import MemoryTimelineScreen from "../screens/memoryTimeline/MemoryTimelineScreen";
 import AddMemoryTimelineScreen from "../screens/memoryTimeline/AddMemoryTimelineScreen";
 import PrimaryButton from "../components/common/PrimaryButton";
-import {Octicons} from "@expo/vector-icons";
+import {MaterialIcons, Octicons} from "@expo/vector-icons";
 import {useNavigation} from "@react-navigation/native";
 import Colors from "../constants/Colors";
 import {Pressable, Text, View} from "react-native";
 import PartnerScreen from "../screens/common/PartnerScreen";
 import TextStyle from "../constants/TextStyle";
 import NoPartnerScreen from "../screens/common/NoPartnerScreen";
+import ViewMemoryScreen from "../screens/memoryTimeline/ViewMemoryScreen";
 
 const MainStackNavigator = () => {
     const Stack = createStackNavigator()
     const navigation = useNavigation()
 
-    return <Stack.Navigator initialRouteName={"MemoryTimelineScreen"}
+    return <Stack.Navigator initialRouteName={"memoryTimelineScreen"}
                             screenOptions={{
                                 headerShown: true,
                                 headerTitleAlign: "center",
@@ -22,7 +23,7 @@ const MainStackNavigator = () => {
                                 cardStyle: {backgroundColor: Colors.background},
                                 headerTitleStyle: {color: Colors.onBackground},
                             }}>
-        <Stack.Screen name={"MemoryTimelineScreen"}
+        <Stack.Screen name={"memoryTimelineScreen"}
                       options={{
                           headerTitle: "Memory Timeline",
                           headerLeft: () => <PrimaryButton onPress={() => navigation.navigate("partnerScreen")}
@@ -64,7 +65,7 @@ const MainStackNavigator = () => {
                           </PrimaryButton>,
                           headerRight: () => <PrimaryButton
                               onPress={() => {
-                                  navigation.navigate("AddMemoryTimelineScreen")
+                                  navigation.navigate("addMemoryScreen",{edit:false})
                               }}
                               container={{borderRadius: 500}}
                               pressable={{paddingHorizontal: 18, paddingVertical: 15}}>
@@ -72,9 +73,9 @@ const MainStackNavigator = () => {
                           </PrimaryButton>
                       }}
                       component={MemoryTimelineScreen}/>
-        <Stack.Screen name={"AddMemoryTimelineScreen"}
+        <Stack.Screen name={"addMemoryScreen"}
                       options={{
-                          headerTitle: "Add Memory Timeline",
+                          headerTitle: "Add Memory",
                       }}
                       component={AddMemoryTimelineScreen}/>
         <Stack.Screen name={"partnerScreen"}
@@ -82,6 +83,11 @@ const MainStackNavigator = () => {
                           headerTitle: "Your Partner",
                       }}
                       component={PartnerScreen}/>
+        <Stack.Screen name={"viewMemoryScreen"}
+                      options={{
+                          headerTitle: "View Memory",
+                      }}
+                      component={ViewMemoryScreen}/>
         <Stack.Screen name={"noPartnerScreen"} options={{
             headerShown: false,
             headerTitle: "Join with your partner",

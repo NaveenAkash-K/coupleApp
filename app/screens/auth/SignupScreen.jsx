@@ -2,12 +2,41 @@ import {ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
 import TextStyle, {TextStyles} from "../../constants/TextStyle";
 import Colors from "../../constants/Colors";
 import PrimaryButton from "../../components/common/PrimaryButton";
-import {useNavigation} from "@react-navigation/native";
+import {StackActions, useNavigation} from "@react-navigation/native";
 import otpSignupScreen from "./OtpSignupScreen";
 import {SafeAreaView} from "react-native-safe-area-context";
+import signupAPI from "../../apis/auth/signupAPI";
+import CustomTextInput from "../../components/common/CustomTextInput";
+import React, {useState} from "react";
+import Toast from "react-native-toast-message";
+import * as SecureStore from "expo-secure-store";
 
 const SignupScreen = () => {
     const navigation = useNavigation();
+    const [username, setUsername] = useState("")
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [confirmPassword, setConfirmPassword] = useState("")
+    const [isSignupLoading, setIsSignupLoading] = useState(false)
+
+    const handleSignup = async () => {
+        try {
+            setIsSignupLoading(true)
+            const response = await signupAPI({
+                username, email, password, confirmPassword
+            })
+            await SecureStore.setItemAsync("userId", response.data.userId);
+            navigation.dispatch(StackActions.replace("otpSignupScreen"))
+
+        } catch (e) {
+            Toast.show({
+                type: 'error',
+                text1: e.response.data.message,
+            })
+        } finally {
+            setIsSignupLoading(false)
+        }
+    }
 
     return <SafeAreaView style={{flex: 1}}>
         <ScrollView style={{flex: 1}} contentContainerStyle={{flex: 1}}>
@@ -27,55 +56,25 @@ const SignupScreen = () => {
                 marginVertical: 10
             }}></View>
             <View style={{marginTop: 40, marginBottom: 30, marginHorizontal: 30, gap: 20}}>
-                <View style={{position: "relative"}}>
-                    <Text style={{
-                        position: "absolute",
-                        backgroundColor: Colors.background,
-                        top: -10,
-                        left: 15,
-                        zIndex: 1,
-                        paddingHorizontal: 5,
-                    }}>Your Name</Text>
-                    <TextInput style={[TextStyle.bodyMedium, styles.textInput]}/>
-                </View>
-                <View style={{position: "relative"}}>
-                    <Text style={{
-                        position: "absolute",
-                        backgroundColor: Colors.background,
-                        top: -10,
-                        left: 15,
-                        zIndex: 1,
-                        paddingHorizontal: 5,
-                    }}>Email</Text>
-                    <TextInput style={[TextStyle.bodyMedium, styles.textInput]}/>
-                </View>
-                <View style={{position: "relative"}}>
-                    <Text style={{
-                        position: "absolute",
-                        backgroundColor: Colors.background,
-                        top: -10,
-                        left: 15,
-                        zIndex: 1,
-                        paddingHorizontal: 5,
-                    }}>Password</Text>
-                    <TextInput style={[TextStyle.bodyMedium, styles.textInput]}/>
-                </View>
-                <View style={{position: "relative"}}>
-                    <Text style={{
-                        position: "absolute",
-                        backgroundColor: Colors.background,
-                        top: -10,
-                        left: 15,
-                        zIndex: 1,
-                        paddingHorizontal: 5,
-                    }}>Confirm Password</Text>
-                    <TextInput style={[TextStyle.bodyMedium, styles.textInput]}/>
-                </View>
+                <CustomTextInput
+                    label={"Your Name"}
+                    value={username}
+                    onChangeText={setUsername}/>
+                <CustomTextInput
+                    label={"Email"}
+                    value={email}
+                    onChangeText={setEmail}/>
+                <CustomTextInput
+                    label={"Password"}
+                    value={password}
+                    onChangeText={setPassword}/>
+                <CustomTextInput
+                    label={"Confirm Password"}
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}/>
             </View>
             <PrimaryButton
-                onPress={() => {
-                    navigation.navigate("otpSignupScreen")
-                }}
+                onPress={handleSignup}
                 container={{backgroundColor: Colors.primary, width: "50%", alignSelf: "center", borderRadius: 10}}
                 pressable={{paddingVertical: 10}}>
                 <Text style={[TextStyle.titleMedium, {color: Colors.onPrimary, textAlign: "center"}]}>Sign Up</Text>
@@ -89,7 +88,9 @@ const SignupScreen = () => {
                 marginBottom: 20
             }}>
                 <Text style={[TextStyle.bodyMedium, {margin: 5}]}>Already have an account?</Text>
-                <PrimaryButton onPress={() => navigation.navigate("loginScreen")} pressable={{padding: 5}}>
+                <PrimaryButton onPress={() =>
+                    navigation.dispatch(StackActions.replace("loginScreen"))
+                } pressable={{padding: 5}}>
                     <Text
                         style={[TextStyle.bodyMedium, TextStyles.semiBold, {color: Colors.primary}]}>Login</Text>
                 </PrimaryButton>

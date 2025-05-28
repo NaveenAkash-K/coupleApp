@@ -2,11 +2,59 @@ import {ScrollView, StyleSheet, Text, TextInput, View} from "react-native";
 import TextStyle, {TextStyles} from "../../constants/TextStyle";
 import Colors from "../../constants/Colors";
 import PrimaryButton from "../../components/common/PrimaryButton";
-import {useNavigation} from "@react-navigation/native";
+import {StackActions, useNavigation} from "@react-navigation/native";
 import {SafeAreaView} from "react-native-safe-area-context";
+import React, {useState} from "react";
+import CustomTextInput from "../../components/common/CustomTextInput";
+import loginAPI from "../../apis/auth/loginAPI";
+import Toast from 'react-native-toast-message'
+import * as SecureStore from 'expo-secure-store';
+
+import useAppStore from "../../store/useAppStore";
+
 
 const LoginScreen = () => {
     const navigation = useNavigation();
+    const [email, setEmail] = useState("")
+    const [password, setPassword] = useState("")
+    const [isLoginLoading, setIsLoginLoading] = useState(false)
+    // const {setAuthState,modifyAuthSlice} = useAppStore(state => state.authSlice)
+    const {setAuthState, modifyAuthSlice} = useAppStore(state => state.authSlice)
+
+    const handleLogin = async () => {
+        try {
+            setIsLoginLoading(true)
+            const response = await loginAPI({
+                email,
+                password
+            })
+
+            await SecureStore.setItemAsync("jwt", response.data.token);
+            await SecureStore.setItemAsync("userId", response.data.user._id);
+            await SecureStore.setItemAsync("inviteId", response.data.user.inviteId);
+            await SecureStore.setItemAsync("username", response.data.user.username);
+            await SecureStore.setItemAsync("isLinked", response.data.user.isLinked.toString());
+            // modifyAuthSlice("userId",response.data.user._id)
+            // modifyAuthSlice("inviteId", response.data.user.inviteId)
+            // modifyAuthSlice("username", response.data.user.username)
+            // modifyAuthSlice("isLinked", response.data.user.isLinked)
+            // modifyAuthSlice("isLoggedIn", response.data.user.isLinked)
+
+            setAuthState(true);
+        } catch (e) {
+            if (e.response.status === 300) {
+                navigation.dispatch(StackActions.replace("otpSignupScreen"))
+            }
+            Toast.show({
+                type: 'error',
+                text1: e.response.data.message,
+            })
+        } finally {
+            setIsLoginLoading(false)
+        }
+    }
+
+
 
     return <SafeAreaView style={{flex: 1}}>
         <ScrollView style={{flex: 1}} contentContainerStyle={{flex: 1}}>
@@ -29,31 +77,18 @@ const LoginScreen = () => {
                     marginVertical: 10
                 }}/>
                 <View style={{gap: 20, marginTop: 20}}>
-                    <View style={{position: "relative"}}>
-                        <Text style={{
-                            position: "absolute",
-                            backgroundColor: Colors.background,
-                            top: -10,
-                            left: 15,
-                            zIndex: 1,
-                            paddingHorizontal: 5,
-                        }}>Email</Text>
-                        <TextInput style={[TextStyle.bodyMedium, styles.textInput]}/>
-                    </View>
-                    <View style={{position: "relative"}}>
-                        <Text style={{
-                            position: "absolute",
-                            backgroundColor: Colors.background,
-                            top: -10,
-                            left: 15,
-                            zIndex: 1,
-                            paddingHorizontal: 5,
-                        }}>Password</Text>
-                        <TextInput style={[TextStyle.bodyMedium, styles.textInput]}/>
-                    </View>
+                    <CustomTextInput
+                        label={"Email"}
+                        value={email}
+                        onChangeText={setEmail}/>
+                    <CustomTextInput
+                        label={"Password"}
+                        value={password}
+                        onChangeText={setPassword}/>
                 </View>
             </View>
             <PrimaryButton
+                onPress={handleLogin}
                 container={{backgroundColor: Colors.primary, width: "50%", alignSelf: "center", borderRadius: 10}}
                 pressable={{paddingVertical: 10}}>
                 <Text style={[TextStyle.titleMedium, {color: "white", textAlign: "center"}]}>Login</Text>
@@ -67,7 +102,7 @@ const LoginScreen = () => {
                 marginBottom: 20
             }}>
                 <Text style={[TextStyle.bodyMedium, {margin: 5}]}>New user?</Text>
-                <PrimaryButton onPress={() => navigation.navigate("signupScreen")}>
+                <PrimaryButton onPress={() => navigation.dispatch(StackActions.replace('signupScreen'))}>
                     <Text
                         style={[TextStyle.bodyMedium, TextStyles.semiBold, {color: Colors.primary, padding: 5}]}>Sign
                         Up</Text>

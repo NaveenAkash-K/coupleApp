@@ -1,28 +1,123 @@
-import {ScrollView, Text, View, StyleSheet, Image, TextInput, KeyboardAvoidingView} from "react-native";
+import {
+    ScrollView,
+    Text,
+    View,
+    StyleSheet,
+    Image,
+    TextInput,
+    KeyboardAvoidingView,
+    ActivityIndicator
+} from "react-native";
 import Colors from "../../constants/Colors";
 import TextStyle, {TextStyles} from "../../constants/TextStyle";
 import PrimaryButton from "../../components/common/PrimaryButton";
 import {MaterialIcons, Octicons} from "@expo/vector-icons";
 import * as ImagePicker from "expo-image-picker";
-import {useState} from "react";
+import {useLayoutEffect, useState} from "react";
 import DateTimePicker, {useDefaultStyles} from "react-native-ui-datepicker";
 import {SafeAreaView} from "react-native-safe-area-context";
 import CustomTextInput from "../../components/common/CustomTextInput";
+import addMemoryAPI from "../../apis/memoryTimeline/addMemoryAPI";
+import {StackActions, useNavigation, useRoute} from "@react-navigation/native";
+import Toast from "react-native-toast-message";
+import useAppStore from "../../store/useAppStore";
+import moment from "moment";
+import editMemoryAPI from "../../apis/memoryTimeline/editMemoryAPI";
 
 const AddMemoryTimelineScreen = () => {
-    const [pickedImage, setPickedImage] = useState();
-    const [selectedDate, setSelectedDate] = useState(new Date());
+    const route = useRoute();
+    const {params} = route;
+    const [pickedImage, setPickedImage] = useState(params.edit ? params.memory.base64 : null);
+    const [selectedDate, setSelectedDate] = useState(params.edit ? moment(params.memory.date).toDate() : new Date());
+    const [title, setTitle] = useState(params.edit ? params.memory.title : "")
+    const [description, setDescription] = useState(params.edit ? params.memory.description : "")
+    const navigation = useNavigation();
+    const {refreshMemories, editMemory} = useAppStore(state => state.memoryTimelineSlice);
+    const [isLoading, setIsLoading] = useState(false);
+
+    useLayoutEffect(() => {
+        navigation.setOptions({headerTitle: params.edit ? "Edit Memory" : "Add Memory"})
+    }, []);
 
     const handleImagePick = async () => {
         let result = await ImagePicker.launchImageLibraryAsync({
             mediaTypes: ['images'],
             allowsEditing: true,
             base64: true,
-            quality: 0.4,
+            quality: 0.2,
         });
 
         if (result.assets !== null) {
-            setPickedImage(result);
+            setPickedImage(result?.assets[0]?.base64);
+        }
+    };
+
+    const handleEdit = async () => {
+        if (!title.trim() || !description.trim()) {
+            Toast.show({type: "error", text1: "Please fill in title and description"})
+            return;
+        }
+
+        setIsLoading(true)
+
+        try {
+            const response = await editMemoryAPI(params.memory._id, {
+                title: title,
+                description: description,
+                date: selectedDate.toISOString(),
+                image: pickedImage || null,
+                deleteImage: (pickedImage === null && params.memory.base64)
+            })
+
+            editMemory(response.data.updatedMemory, pickedImage);
+            navigation.goBack()
+            navigation.dispatch(StackActions.replace("viewMemoryScreen", {
+                memory: {
+                    _id: params.memory._id,
+                    title: title,
+                    description: description,
+                    date: selectedDate.toISOString(),
+                    imageName: pickedImage,
+                    base64: pickedImage || null,
+                }
+            }))
+
+        } catch (e) {
+            console.error(e.response.data);
+            alert("An error occurred while saving memory.");
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    const handleSave = async () => {
+        // if (isLoading) return;
+        if (!title.trim() || !description.trim()) {
+            Toast.show({type: "error", text1: "Please fill in title and description"})
+            return;
+        }
+
+
+        setIsLoading(true)
+
+        try {
+            const response = await addMemoryAPI({
+                title,
+                description,
+                date: selectedDate.toISOString(),
+                image: pickedImage || null,
+            })
+            Toast.show({
+                type: 'success',
+                text1: response.data.message,
+            })
+            refreshMemories();
+            navigation.goBack();
+        } catch (error) {
+            console.error(error.response.data);
+            alert("An error occurred while saving memory.");
+        } finally {
+            setIsLoading(false)
         }
     };
 
@@ -55,7 +150,7 @@ const AddMemoryTimelineScreen = () => {
                     <View style={styles.imageContainer}>
                         <Image
                             style={styles.image}
-                            source={{uri: pickedImage.assets[0].uri}}
+                            source={{uri: `data:image/jpeg;base64,${pickedImage}`}}
                         />
                         <PrimaryButton
                             onPress={handleImagePick}
@@ -77,10 +172,12 @@ const AddMemoryTimelineScreen = () => {
                 )}
 
                 {/* Title Input */}
-                <CustomTextInput label={"Title"} placeholder={"Eg: Movie Date"}/>
+                <CustomTextInput label={"Title"} placeholder={"Eg: Movie Date"} value={title} onChangeText={setTitle}/>
 
                 {/* Description Input */}
                 <CustomTextInput label={"Write what you feel about the day"}
+                                 value={description}
+                                 onChangeText={setDescription}
                                  textInputStyle={styles.descriptionInput}
                                  placeholder={"What happened today? Pour it out here!"} multiline/>
             </ScrollView>
@@ -88,10 +185,14 @@ const AddMemoryTimelineScreen = () => {
             {/* Footer Save Button */}
             <View style={styles.footer}>
                 <PrimaryButton
+                    isLoading={isLoading}
+                    onPress={params.edit ? handleEdit : handleSave}
                     container={styles.saveButtonContainer}
                     pressable={styles.saveButtonPressable}
                 >
-                    <Text style={[TextStyle.bodyLarge, styles.saveButtonText]}>Save memory</Text>
+                    {isLoading ? <ActivityIndicator color={Colors.onPrimary}/> :
+                        <Text
+                            style={[TextStyle.bodyLarge, styles.saveButtonText]}>{params.edit ? "Save changes" : "Add memory"}</Text>}
                 </PrimaryButton>
             </View>
         </View>
@@ -104,7 +205,7 @@ const styles = StyleSheet.create({
     container: {flex: 1},
     scrollView: {flex: 1},
     scrollContent: {padding: 10, gap: 15},
-    datePickerWrapper: {marginBottom: -40},
+    datePickerWrapper: {},
     dateHeader: {height: 50},
     selectedMonth: {justifyContent: 'center', alignItems: 'center'},
     selectedDate: {backgroundColor: Colors.primary, borderRadius: 100},

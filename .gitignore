@@ -3,8 +3,12 @@
 /backend/node_modules
 /backend/.idea
 /backend/package-lock.json
+/backend/firebase-admin-cred.json
+/backend/.env
+/backend/firebase.js
 
 /app/node_modules
 /app/.idea
 /app/.expo
 /app/package-lock.json
+/app/.env

@@ -20,6 +20,12 @@ import {
 import Colors from "./constants/Colors";
 import AuthNavigator from "./navigators/AuthNavigator";
 import {enableScreens} from "react-native-screens";
+import {useEffect, useLayoutEffect} from "react";
+import Toast from "react-native-toast-message";
+import TextStyle from "./constants/TextStyle";
+
+import useAppStore from "./store/useAppStore";
+import * as SecureStore from "expo-secure-store";
 
 export default function App() {
     const [fontsLoaded] = useFonts({
@@ -34,9 +40,22 @@ export default function App() {
         Inter_900Black,
     });
 
-    enableScreens();
+    const {isLoggedIn, setAuthState} = useAppStore(state => state.authSlice)
 
-    const isLoggedIn = true
+    useLayoutEffect(() => {
+        const checkAuth = async () => {
+            // await SecureStore.deleteItemAsync("jwt")
+            // await SecureStore.deleteItemAsync("userId")
+            // await SecureStore.deleteItemAsync("inviteId")
+            // await SecureStore.deleteItemAsync("username")
+            // await SecureStore.deleteItemAsync("isLinked")
+            // setAuthState(false)
+            if (await SecureStore.getItemAsync("jwt")) {
+                setAuthState(true)
+            }
+        }
+        checkAuth()
+    }, []);
 
     return (
         <SafeAreaProvider style={{backgroundColor: Colors.background}}>
@@ -44,6 +63,11 @@ export default function App() {
                 <StatusBar backgroundColor={Colors.background} barStyle="dark-content"/>
                 {isLoggedIn ? <MainStackNavigator/> : <AuthNavigator/>}
             </NavigationContainer>
+            <Toast
+                position='bottom'
+                avoidKeyboard={true}
+                bottomOffset={20}
+            />
         </SafeAreaProvider>
     )
 }
