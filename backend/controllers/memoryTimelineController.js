@@ -51,19 +51,16 @@ router.post("/add", async (req, res) => {
     }
 });
 
-router.delete("/", async (req, res) => {
-})
-
 router.patch("/:_id", async (req, res) => {
     try {
-        const { _id } = req.params;
-        const { title, description, image, date, deleteImage } = req.body;
+        const {_id} = req.params;
+        const {title, description, image, date, deleteImage} = req.body;
         const userId = req.context.userId;
 
         // Find the memory
         const memory = await Memory.findById(_id);
         if (!memory) {
-            return res.status(404).json({ message: "Memory not found" });
+            return res.status(404).json({message: "Memory not found"});
         }
 
         // Update fields
@@ -76,7 +73,7 @@ router.patch("/:_id", async (req, res) => {
         // Delete image if requested
         if (deleteImage === true) {
             try {
-                await bucket.file(filename).delete({ ignoreNotFound: true });
+                await bucket.file(filename).delete({ignoreNotFound: true});
                 memory.imageName = undefined;
             } catch (err) {
                 console.warn("Image delete error:", err.message);
@@ -90,14 +87,14 @@ router.patch("/:_id", async (req, res) => {
                 const file = bucket.file(filename);
 
                 await file.save(buffer, {
-                    metadata: { contentType: "image/jpeg" },
+                    metadata: {contentType: "image/jpeg"},
                     resumable: false,
                 });
 
                 memory.imageName = _id;
             } catch (err) {
                 console.error("Image upload error:", err);
-                return res.status(500).json({ message: "Failed to upload image" });
+                return res.status(500).json({message: "Failed to upload image"});
             }
         }
 
@@ -105,26 +102,26 @@ router.patch("/:_id", async (req, res) => {
         res.status(200).json({updatedMemory});
     } catch (error) {
         console.error("Error updating memory:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({message: "Internal server error"});
     }
 });
 
 router.delete("/:_id", async (req, res) => {
     try {
-        const { _id } = req.params;
+        const {_id} = req.params;
         const userId = req.context.userId; // assuming middleware sets this
 
         // Find the memory
         const memory = await Memory.findById(_id);
         if (!memory) {
-            return res.status(404).json({ message: "Memory not found" });
+            return res.status(404).json({message: "Memory not found"});
         }
 
         // Delete image from storage if exists
         if (memory.imageName) {
             const filename = `${userId}/memories/${_id}.jpg`;
             try {
-                await bucket.file(filename).delete({ ignoreNotFound: true });
+                await bucket.file(filename).delete({ignoreNotFound: true});
             } catch (err) {
                 console.warn("Error deleting image:", err.message);
             }
@@ -133,11 +130,11 @@ router.delete("/:_id", async (req, res) => {
         // Delete the memory from DB
         await Memory.findByIdAndDelete(_id);
 
-        res.status(200).json({ message: "Memory deleted successfully" });
+        res.status(200).json({message: "Memory deleted successfully"});
 
     } catch (error) {
         console.error("Error deleting memory:", error);
-        res.status(500).json({ message: "Internal server error" });
+        res.status(500).json({message: "Internal server error"});
     }
 });
 

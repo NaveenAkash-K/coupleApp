@@ -26,6 +26,7 @@ import TextStyle from "./constants/TextStyle";
 
 import useAppStore from "./store/useAppStore";
 import * as SecureStore from "expo-secure-store";
+import {PaperProvider} from "react-native-paper";
 
 export default function App() {
     const [fontsLoaded] = useFonts({
@@ -58,17 +59,19 @@ export default function App() {
     }, []);
 
     return (
-        <SafeAreaProvider style={{backgroundColor: Colors.background}}>
-            <NavigationContainer>
-                <StatusBar backgroundColor={Colors.background} barStyle="dark-content"/>
-                {isLoggedIn ? <MainStackNavigator/> : <AuthNavigator/>}
-            </NavigationContainer>
-            <Toast
-                position='bottom'
-                avoidKeyboard={true}
-                bottomOffset={20}
-            />
-        </SafeAreaProvider>
+        <PaperProvider>
+            <SafeAreaProvider style={{backgroundColor: Colors.background}}>
+                <NavigationContainer>
+                    <StatusBar backgroundColor={Colors.background} barStyle="dark-content"/>
+                    {isLoggedIn ? <MainStackNavigator/> : <AuthNavigator/>}
+                </NavigationContainer>
+                <Toast
+                    position='bottom'
+                    avoidKeyboard={true}
+                    bottomOffset={20}
+                />
+            </SafeAreaProvider>
+        </PaperProvider>
     )
 }
 

@@ -144,12 +144,26 @@ const memoryTimelineSlice = (set, get, api) => ({
 
             return {
                 ...group,
-                data: updatedGroupData.sort((a,b) => new Date(a.date) - new Date(b.date)),
+                data: updatedGroupData.sort((a, b) => new Date(a.date) - new Date(b.date)),
             };
         });
 
         set({memories: updatedMemories});
-    }
+    },
+
+    deleteMemory: (memoryId) => {
+        const currentMemories = get().memoryTimelineSlice.memories;
+
+        const updatedMemories = currentMemories
+            .map(group => {
+                const filteredData = group.data.filter(mem => mem._id !== memoryId);
+                if (filteredData.length === 0) return null; // remove empty group
+                return { ...group, data: filteredData };
+            })
+            .filter(Boolean); // remove null groups
+
+        set({ memories: updatedMemories });
+    },
 });
 
 export default memoryTimelineSlice;
