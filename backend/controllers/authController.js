@@ -5,6 +5,7 @@ const User = require("../models/userModel")
 const bcrypt = require("bcrypt");
 const speakeasy = require("speakeasy")
 const {v4: uuidv4} = require("uuid");
+const checkAuth = require("../middleware/checkAuth")
 
 router.post("/login", async (req, res) => {
     try {
@@ -111,5 +112,11 @@ router.post("/verifyOtp", async (req, res) => {
         res.status(500).json({error: "OTP verification failed", details: err.message});
     }
 });
+
+router.get("/checkAuth", checkAuth, async (req, res) => {
+    const user = await User.findById(req.context.userId);
+    if (!user) return res.status(404).json({message: "User not found"});
+    return res.json({user})
+})
 
 module.exports = router;

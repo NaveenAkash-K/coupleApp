@@ -37,7 +37,7 @@ router.get("/received", async (req, res) => {
 router.get("/checkStatus", async (req, res) => {
     try {
         const userId = req.context.userId;
-        const couple = await Couple.findOne({$or: [{partnerOne: userId}, {partnerOne: userId}]}).populate("partnerOne partnerTwo", "username email _id")
+        const couple = await Couple.findOne({$or: [{userA: userId}, {userB: userId}]}).populate("userA userB", "username email _id")
 
         res.status(200).json({couple});
     } catch (err) {
@@ -114,8 +114,8 @@ router.post("/accept", async (req, res) => {
         // Create Couple
         const couple = new Couple({
             _id: coupleId,
-            partnerOne: invitation.from,
-            partnerTwo: invitation.to
+            userA: invitation.from,
+            userB: invitation.to
         });
 
         await couple.save();

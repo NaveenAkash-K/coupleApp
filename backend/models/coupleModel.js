@@ -5,8 +5,21 @@ const schema = mongoose.Schema;
 const CoupleSchema = new schema(
     {
         _id: {type: String, required: true},
-        partnerOne: {type: String, ref: "User", required: true},
-        partnerTwo: {type: String, ref: "User", required: true},
+        userA: {type: String, ref: "User", required: true},
+        userB: {type: String, ref: "User", required: true},
+        anniversary: { type: Date }, // manually set if needed
+
+        totalMemories: { type: Number, default: 0 },
+        userAMemories: { type: Number, default: 0 },
+        userBMemories: { type: Number, default: 0 },
+
+        // firstMemoryDate: { type: Date },
+        // lastMemoryDate: { type: Date },
+
+        // placesVisited: { type: [String], default: [] },
+        // commonTags: { type: [String], default: [] },
+        // sharedPromises: { type: [String], default: [] },
+        // recentPhotos: { type: [String], default: [] },
     },
     {timestamps: true}
 )

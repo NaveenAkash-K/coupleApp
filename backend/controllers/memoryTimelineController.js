@@ -4,6 +4,7 @@ const {v4: uuidv4} = require("uuid");
 const {bucket} = require("../firebase");
 const Memory = require("../models/memoryModal")
 const User = require("../models/userModel")
+const Couple = require("../models/coupleModel")
 const groupByMonth = require("../utils/groupByMonth")
 
 router.post("/add", async (req, res) => {
@@ -14,37 +15,44 @@ router.post("/add", async (req, res) => {
         const user = await User.findById(req.context.userId);
 
         const memory = new Memory({
-                _id: memoryId,
-                title,
-                description,
-                date,
-                userId: req.context.userId,
-                coupleId: user.coupleId
-            }
-        )
+            _id: memoryId,
+            title,
+            description,
+            date,
+            userId: req.context.userId,
+            coupleId: user.coupleId
+        });
 
         if (image) {
-            // Decode base64
             const buffer = Buffer.from(image, "base64");
-
-            // Generate a unique filename
             const filename = `${req.context.userId}/memories/${memoryId}.jpg`;
-
             const file = bucket.file(filename);
 
             await file.save(buffer, {
-                metadata: {
-                    contentType: "image/jpeg",
-                },
+                metadata: {contentType: "image/jpeg"},
                 resumable: false,
             });
 
             memory.imageName = memoryId;
         }
 
-        memory.save()
+        await memory.save();
 
         res.status(200).json({message: "Memory saved!"});
+
+        const couple = await Couple.findById(user.coupleId);
+        // 🔁 Increment memory counts
+        const update = {
+            $inc: {
+                totalMemories: 1,
+                ...(req.context.userId === couple.userA
+                    ? {userAMemories: 1}
+                    : {userBMemories: 1})
+            }
+        };
+
+        await Couple.findByIdAndUpdate(user.coupleId, update);
+
     } catch (error) {
         console.error("Error uploading image:", error);
         res.status(500).json({error: "Something went wrong"});
@@ -116,6 +124,8 @@ router.delete("/:_id", async (req, res) => {
         if (!memory) {
             return res.status(404).json({message: "Memory not found"});
         }
+        await Memory.findByIdAndDelete(_id);
+        res.status(200).json({message: "Memory deleted successfully"});
 
         // Delete image from storage if exists
         if (memory.imageName) {
@@ -128,9 +138,20 @@ router.delete("/:_id", async (req, res) => {
         }
 
         // Delete the memory from DB
-        await Memory.findByIdAndDelete(_id);
+        const user = await User.findById(req.context.userId);
+        const couple = await Couple.findById(user.coupleId);
 
-        res.status(200).json({message: "Memory deleted successfully"});
+        const update = {
+            $inc: {
+                totalMemories: -1,
+                ...(req.context.userId === couple.userA
+                    ? {userAMemories: -1}
+                    : {userBMemories: -1})
+            }
+        };
+
+        await Couple.findByIdAndUpdate(user.coupleId, update);
+
 
     } catch (error) {
         console.error("Error deleting memory:", error);

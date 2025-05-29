@@ -5,8 +5,6 @@ const checkAuth = async (req, res, next) => {
     try {
         if (!token || token.split(" ").length !== 2) throw "";
         const result = jwt.verify(token.split(" ")[1], process.env.JWT_SECRET);
-        console.log("result")
-        console.log(result)
         req.context = {userId: result.userId};
         next();
     } catch (e) {
