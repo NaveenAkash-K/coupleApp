@@ -6,16 +6,16 @@ import Colors from "../../constants/Colors";
 import coupleIllustrationImage from "../../assets/images/couple_illustration.png";
 import CustomTextInput from "../../components/common/CustomTextInput";
 import PrimaryButton from "../../components/common/PrimaryButton";
-import getSentInvitationsAPI from "../../apis/common/invitations/getSentInvitationsAPI";
-import getReceivedInvitationsAPI from "../../apis/common/invitations/getReceivedInvitationsAPI";
-import sendInvitationAPI from "../../apis/common/invitations/sendInvitationAPI";
-import acceptInvitationAPI from "../../apis/common/invitations/acceptInvitationAPI";
-import rejectInvitation from "../../apis/common/invitations/rejectInvitation";
+import getSentInvitationsAPI from "../../apis/invitations/getSentInvitationsAPI";
+import getReceivedInvitationsAPI from "../../apis/invitations/getReceivedInvitationsAPI";
+import sendInvitationAPI from "../../apis/invitations/sendInvitationAPI";
+import acceptInvitationAPI from "../../apis/invitations/acceptInvitationAPI";
+import rejectInvitation from "../../apis/invitations/rejectInvitation";
 import Toast from "react-native-toast-message";
 import {StackActions, useNavigation} from "@react-navigation/native";
 import useAppStore from "../../store/useAppStore";
-import checkLinkedStatus from "../../apis/common/invitations/checkLinkedStatusAPI";
-import cancelInvitationAPI from "../../apis/common/invitations/cancelInvitationAPI";
+import checkLinkedStatus from "../../apis/invitations/checkLinkedStatusAPI";
+import cancelInvitationAPI from "../../apis/invitations/cancelInvitationAPI";
 
 const NoPartnerScreen = (props) => {
     const [myInviteId, setMyInviteId] = useState("ABC123");

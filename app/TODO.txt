@@ -1,8 +1,9 @@
 [*] - Delete memory functionality
 [*] - Keep all user details in store except jwt token
-[ ] - Delete photo from memory functionality
+[*] - Logout functionality
+[ ] - User profile page
 [ ] - Couple Screen statistics UI
-[ ] - Logout functionality
+[ ] - Delete photo from memory functionality
 [ ] - Get additional details in signup
 [ ] - Keep the memory timeline scroll to latest date
 [ ] - Pull to refresh invitations

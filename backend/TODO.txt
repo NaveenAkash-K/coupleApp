@@ -1,8 +1,9 @@
 [*] - Delete memory api
-[ ] - Couple statistics calculation and api
+[*] - Couple statistics calculation and api
+[*] - Configure vercel and deploy
+[*] - Separate checkAuth api which validates jwt and returns user object
+[ ] - User profile APIs
 [ ] - API to get user additional details
-[ ] - Separate checkAuth api which validates jwt and returns user object
-[ ] - Configure vercel and deploy
 
 [ ] - Server Web socket for invitations
 [ ] - Pagination on memory timeline

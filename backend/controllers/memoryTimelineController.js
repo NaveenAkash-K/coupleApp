@@ -6,30 +6,34 @@ const Memory = require("../models/memoryModal")
 const User = require("../models/userModel")
 const Couple = require("../models/coupleModel")
 const groupByMonth = require("../utils/groupByMonth")
+const moment = require("moment");
 
 router.post("/add", async (req, res) => {
     try {
-        const {title, description, date, image} = req.body;
+        const { title, description, date, image } = req.body;
         const memoryId = uuidv4();
+        const memoryDate = moment(date).toDate();
+        const userId = req.context.userId;
 
-        const user = await User.findById(req.context.userId);
+        const user = await User.findById(userId);
+        const couple = await Couple.findById(user.coupleId);
 
         const memory = new Memory({
             _id: memoryId,
             title,
             description,
-            date,
-            userId: req.context.userId,
+            date: memoryDate,
+            userId,
             coupleId: user.coupleId
         });
 
         if (image) {
             const buffer = Buffer.from(image, "base64");
-            const filename = `${req.context.userId}/memories/${memoryId}.jpg`;
+            const filename = `${userId}/memories/${memoryId}.jpg`;
             const file = bucket.file(filename);
 
             await file.save(buffer, {
-                metadata: {contentType: "image/jpeg"},
+                metadata: { contentType: "image/jpeg" },
                 resumable: false,
             });
 
@@ -38,124 +42,196 @@ router.post("/add", async (req, res) => {
 
         await memory.save();
 
-        res.status(200).json({message: "Memory saved!"});
-
-        const couple = await Couple.findById(user.coupleId);
-        // 🔁 Increment memory counts
+        // Prepare update object
         const update = {
             $inc: {
                 totalMemories: 1,
-                ...(req.context.userId === couple.userA
-                    ? {userAMemories: 1}
-                    : {userBMemories: 1})
-            }
+                ...(userId === couple.userA
+                    ? { userAMemories: 1 }
+                    : { userBMemories: 1 }),
+            },
+            $set: {}
         };
+
+        // Update per-user memory dates
+        if (userId === couple.userA) {
+            if (!couple.userAFirstMemoryDate || memoryDate < couple.userAFirstMemoryDate) {
+                update.$set.userAFirstMemoryDate = memoryDate;
+            }
+            if (!couple.userALastMemoryDate || memoryDate > couple.userALastMemoryDate) {
+                update.$set.userALastMemoryDate = memoryDate;
+            }
+        } else {
+            if (!couple.userBFirstMemoryDate || memoryDate < couple.userBFirstMemoryDate) {
+                update.$set.userBFirstMemoryDate = memoryDate;
+            }
+            if (!couple.userBLastMemoryDate || memoryDate > couple.userBLastMemoryDate) {
+                update.$set.userBLastMemoryDate = memoryDate;
+            }
+        }
+
+        // Remove $set if empty
+        if (Object.keys(update.$set).length === 0) {
+            delete update.$set;
+        }
 
         await Couple.findByIdAndUpdate(user.coupleId, update);
 
+        res.status(200).json({ message: "Memory saved!" });
+
     } catch (error) {
-        console.error("Error uploading image:", error);
-        res.status(500).json({error: "Something went wrong"});
+        console.error("Error uploading memory:", error);
+        res.status(500).json({ error: "Something went wrong" });
     }
 });
 
 router.patch("/:_id", async (req, res) => {
     try {
-        const {_id} = req.params;
-        const {title, description, image, date, deleteImage} = req.body;
+        const { _id } = req.params;
+        const { title, description, image, date, deleteImage } = req.body;
         const userId = req.context.userId;
 
-        // Find the memory
         const memory = await Memory.findById(_id);
         if (!memory) {
-            return res.status(404).json({message: "Memory not found"});
+            return res.status(404).json({ message: "Memory not found" });
         }
 
-        // Update fields
+        const oldDate = memory.date;
+        const newDate = moment(date).toDate();
+        const couple = await Couple.findById(memory.coupleId);
+
+        if (!couple) {
+            return res.status(404).json({ message: "Couple not found" });
+        }
+
+        const isUserA = userId === couple.userA;
+        const userPrefix = isUserA ? "userA" : "userB";
+
+        // Update memory fields
         memory.title = title;
         memory.description = description;
-        memory.date = date;
+        memory.date = newDate;
 
         const filename = `${userId}/memories/${_id}.jpg`;
 
-        // Delete image if requested
+        // Handle delete image
         if (deleteImage === true) {
             try {
-                await bucket.file(filename).delete({ignoreNotFound: true});
+                await bucket.file(filename).delete({ ignoreNotFound: true });
                 memory.imageName = undefined;
             } catch (err) {
                 console.warn("Image delete error:", err.message);
             }
         }
 
-        // Upload new image if provided
+        // Handle new image
         if (typeof image === "string" && image.trim() !== "") {
             try {
                 const buffer = Buffer.from(image, "base64");
                 const file = bucket.file(filename);
-
                 await file.save(buffer, {
-                    metadata: {contentType: "image/jpeg"},
+                    metadata: { contentType: "image/jpeg" },
                     resumable: false,
                 });
-
                 memory.imageName = _id;
             } catch (err) {
                 console.error("Image upload error:", err);
-                return res.status(500).json({message: "Failed to upload image"});
+                return res.status(500).json({ message: "Failed to upload image" });
             }
         }
 
         const updatedMemory = await memory.save();
-        res.status(200).json({updatedMemory});
+
+        // Recalculate per-user first/last dates if date changed
+        if (oldDate.getTime() !== newDate.getTime()) {
+            const userMemories = await Memory.find({
+                coupleId: memory.coupleId,
+                userId: userId,
+            }).sort({ date: 1 });
+
+            const dateUpdate = {};
+            if (userMemories.length > 0) {
+                dateUpdate[`${userPrefix}FirstMemoryDate`] = userMemories[0].date;
+                dateUpdate[`${userPrefix}LastMemoryDate`] = userMemories[userMemories.length - 1].date;
+            } else {
+                dateUpdate[`${userPrefix}FirstMemoryDate`] = null;
+                dateUpdate[`${userPrefix}LastMemoryDate`] = null;
+            }
+
+            await Couple.findByIdAndUpdate(memory.coupleId, {
+                $set: dateUpdate,
+            });
+        }
+
+        res.status(200).json({ updatedMemory });
     } catch (error) {
         console.error("Error updating memory:", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 
 router.delete("/:_id", async (req, res) => {
     try {
-        const {_id} = req.params;
-        const userId = req.context.userId; // assuming middleware sets this
+        const { _id } = req.params;
+        const userId = req.context.userId;
 
-        // Find the memory
         const memory = await Memory.findById(_id);
         if (!memory) {
-            return res.status(404).json({message: "Memory not found"});
+            return res.status(404).json({ message: "Memory not found" });
         }
-        await Memory.findByIdAndDelete(_id);
-        res.status(200).json({message: "Memory deleted successfully"});
 
-        // Delete image from storage if exists
+        const couple = await Couple.findById(memory.coupleId);
+        if (!couple) {
+            return res.status(404).json({ message: "Couple not found" });
+        }
+
+        const isUserA = userId === couple.userA;
+        const userPrefix = isUserA ? "userA" : "userB";
+
+        // Delete image if exists
         if (memory.imageName) {
             const filename = `${userId}/memories/${_id}.jpg`;
             try {
-                await bucket.file(filename).delete({ignoreNotFound: true});
+                await bucket.file(filename).delete({ ignoreNotFound: true });
             } catch (err) {
                 console.warn("Error deleting image:", err.message);
             }
         }
 
-        // Delete the memory from DB
-        const user = await User.findById(req.context.userId);
-        const couple = await Couple.findById(user.coupleId);
+        // Delete the memory
+        await Memory.findByIdAndDelete(_id);
 
-        const update = {
+        // Decrement memory count
+        await Couple.findByIdAndUpdate(memory.coupleId, {
             $inc: {
                 totalMemories: -1,
-                ...(req.context.userId === couple.userA
-                    ? {userAMemories: -1}
-                    : {userBMemories: -1})
-            }
-        };
+                [`${userPrefix}Memories`]: -1,
+            },
+        });
 
-        await Couple.findByIdAndUpdate(user.coupleId, update);
+        // Get all remaining memories for the user
+        const userMemories = await Memory.find({
+            coupleId: memory.coupleId,
+            userId: userId,
+        }).sort({ date: 1 });
 
+        const dateUpdate = {};
+        if (userMemories.length === 0) {
+            dateUpdate[`${userPrefix}FirstMemoryDate`] = null;
+            dateUpdate[`${userPrefix}LastMemoryDate`] = null;
+        } else {
+            dateUpdate[`${userPrefix}FirstMemoryDate`] = userMemories[0].date;
+            dateUpdate[`${userPrefix}LastMemoryDate`] = userMemories[userMemories.length - 1].date;
+        }
 
+        await Couple.findByIdAndUpdate(memory.coupleId, {
+            $set: dateUpdate,
+        });
+
+        res.status(200).json({ message: "Memory deleted successfully" });
     } catch (error) {
         console.error("Error deleting memory:", error);
-        res.status(500).json({message: "Internal server error"});
+        res.status(500).json({ message: "Internal server error" });
     }
 });
 

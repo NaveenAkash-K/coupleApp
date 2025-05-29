@@ -17,19 +17,21 @@ import PrimaryButton from "./PrimaryButton";
  * - visible: boolean
  * - title: string
  * - message: string
- * - onConfirm: function
- * - onCancel: function (optional)
- * - confirmText: string (default: 'Yes')
- * - cancelText: string (default: 'Cancel')
+ * - onButton2Press: function
+ * - onButton1Press: function (optional)
+ * - button2Text: string (default: 'Yes')
+ * - button1Text: string (default: 'Cancel')
  */
 const CustomAlert = ({
                          visible,
                          title,
                          message,
-                         onConfirm,
-                         onCancel,
-                         confirmText = "Yes",
-                         cancelText = "Cancel",
+                         onButton2Press,
+                         onButton1Press,
+                         button1Text = "Cancel",
+                         button2Text = "Yes",
+                         button1TextStyle,
+                         button2TextStyle,
                          isLoading
                      }) => {
     return (
@@ -37,9 +39,9 @@ const CustomAlert = ({
             visible={visible}
             transparent
             animationType="fade"
-            onRequestClose={onCancel}
+            onRequestClose={onButton1Press}
         >
-            <TouchableWithoutFeedback onPress={onCancel}>
+            <TouchableWithoutFeedback onPress={onButton1Press}>
                 <View style={styles.backdrop}>
                     <TouchableWithoutFeedback>
                         <View style={styles.alertBox}>
@@ -49,19 +51,21 @@ const CustomAlert = ({
                             <View style={styles.buttonRow}>
                                 <PrimaryButton onPress={() => {
                                     if (isLoading) return
-                                    onCancel()
+                                    onButton1Press()
                                 }} container={{borderRadius: 100}} pressable={[styles.button]}>
-                                    {isLoading ? <ActivityIndicator color={Colors.primary} style={{width:60}}/> : <Text style={[TextStyle.labelLarge, styles.cancel]}>
-                                        {cancelText}
-                                    </Text>}
+                                    {isLoading ? <ActivityIndicator color={Colors.primary} style={{width: 60}}/> :
+                                        <Text style={[TextStyle.labelLarge, styles.button1, button1TextStyle]}>
+                                            {button1Text}
+                                        </Text>}
                                 </PrimaryButton>
                                 <PrimaryButton onPress={() => {
                                     if (isLoading) return
-                                    onConfirm()
+                                    onButton2Press()
                                 }} container={{borderRadius: 100}} style={[styles.button]}>
-                                    {isLoading ? <ActivityIndicator color={Colors.primary} style={{width:60}}/> : <Text style={[TextStyle.labelLarge, styles.confirm]}>
-                                        {confirmText}
-                                    </Text>}
+                                    {isLoading ? <ActivityIndicator color={Colors.primary} style={{width: 60}}/> :
+                                        <Text style={[TextStyle.labelLarge, styles.button2, button2TextStyle]}>
+                                            {button2Text}
+                                        </Text>}
                                 </PrimaryButton>
                             </View>
                         </View>
@@ -105,10 +109,10 @@ const styles = StyleSheet.create({
         paddingVertical: 8,
         paddingHorizontal: 12,
     },
-    cancel: {
-        color: Colors.error
-    },
-    confirm: {
+    button1: {
         color: Colors.primary
+    },
+    button2: {
+        color: Colors.error
     },
 });

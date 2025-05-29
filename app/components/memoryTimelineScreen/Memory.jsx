@@ -115,13 +115,13 @@ const Memory = (props) => {
 
             {/* ✅ Custom Confirmation Alert */}
             <CustomAlert
+                button1Text="Cancel"
+                button2Text="Delete"
+                onButton1Press={() => setShowConfirmModal(false)}
+                onButton2Press={confirmDelete}
                 visible={showConfirmModal}
                 title="Confirm Delete"
                 message="Are you sure you want to delete this memory?"
-                onCancel={() => setShowConfirmModal(false)}
-                onConfirm={confirmDelete}
-                cancelText="Cancel"
-                confirmText="Delete"
                 isLoading={isDeleteLoading}
             />
         </View>

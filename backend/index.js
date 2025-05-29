@@ -7,6 +7,7 @@ const app = express();
 const authController = require("./controllers/authController")
 const invitationController = require("./controllers/invitationController")
 const memoryTimelineController = require("./controllers/memoryTimelineController")
+const coupleController = require("./controllers/coupleController")
 const checkAuth = require("./middleware/checkAuth")
 app.use(helmet());
 app.use(cors());
@@ -20,6 +21,7 @@ app.get("/test", async (req, res) => {
 app.use("/auth", authController)
 app.use("/invitation", checkAuth, invitationController)
 app.use("/memoryTimeline", checkAuth, memoryTimelineController)
+app.use("/couple", checkAuth, coupleController)
 
 mongoose
     .connect(process.env.MONGODB_URI, {

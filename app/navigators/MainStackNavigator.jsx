@@ -10,6 +10,8 @@ import PartnerScreen from "../screens/common/PartnerScreen";
 import TextStyle from "../constants/TextStyle";
 import NoPartnerScreen from "../screens/common/NoPartnerScreen";
 import ViewMemoryScreen from "../screens/memoryTimeline/ViewMemoryScreen";
+import EditProfileScreen from "../screens/common/EditProfileScreen";
+import ViewProfileScreen from "../screens/common/ViewProfileScreen";
 
 const MainStackNavigator = () => {
     const Stack = createStackNavigator()
@@ -88,6 +90,16 @@ const MainStackNavigator = () => {
                           headerTitle: "View Memory",
                       }}
                       component={ViewMemoryScreen}/>
+        <Stack.Screen name={"editProfileScreen"}
+                      options={{
+                          headerTitle: "Edit Profile",
+                      }}
+                      component={EditProfileScreen}/>
+        <Stack.Screen name={"viewProfileScreen"}
+                      options={{
+                          headerTitle: "Profile",
+                      }}
+                      component={ViewProfileScreen}/>
         <Stack.Screen name={"noPartnerScreen"} options={{
             headerShown: false,
             headerTitle: "Join with your partner",
