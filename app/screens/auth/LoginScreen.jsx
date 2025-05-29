@@ -8,9 +8,9 @@ import React, {useState} from "react";
 import CustomTextInput from "../../components/common/CustomTextInput";
 import loginAPI from "../../apis/auth/loginAPI";
 import Toast from 'react-native-toast-message'
-import * as SecureStore from 'expo-secure-store';
 
 import useAppStore from "../../store/useAppStore";
+import * as SecureStore from "expo-secure-store";
 
 
 const LoginScreen = () => {
@@ -30,17 +30,15 @@ const LoginScreen = () => {
             })
 
             await SecureStore.setItemAsync("jwt", response.data.token);
-            await SecureStore.setItemAsync("userId", response.data.user._id);
-            await SecureStore.setItemAsync("inviteId", response.data.user.inviteId);
-            await SecureStore.setItemAsync("username", response.data.user.username);
-            await SecureStore.setItemAsync("isLinked", response.data.user.isLinked.toString());
-            // modifyAuthSlice("userId",response.data.user._id)
-            // modifyAuthSlice("inviteId", response.data.user.inviteId)
-            // modifyAuthSlice("username", response.data.user.username)
-            // modifyAuthSlice("isLinked", response.data.user.isLinked)
-            // modifyAuthSlice("isLoggedIn", response.data.user.isLinked)
-
-            setAuthState(true);
+            // await SecureStore.setItemAsync("userId", response.data.user._id);
+            // await SecureStore.setItemAsync("inviteId", response.data.user.inviteId);
+            // await SecureStore.setItemAsync("username", response.data.user.username);
+            // await SecureStore.setItemAsync("isLinked", response.data.user.isLinked.toString());
+            modifyAuthSlice("userId",response.data.user._id)
+            modifyAuthSlice("inviteId", response.data.user.inviteId)
+            modifyAuthSlice("username", response.data.user.username)
+            modifyAuthSlice("isLinked", response.data.user.isLinked)
+            modifyAuthSlice("isLoggedIn", true)
         } catch (e) {
             if (e.response.status === 300) {
                 navigation.dispatch(StackActions.replace("otpSignupScreen"))

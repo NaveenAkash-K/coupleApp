@@ -22,14 +22,14 @@ import TextStyle from "../../constants/TextStyle";
 const MemoryTimelineScreen = () => {
     const navigation = useNavigation();
     const {memories, loadMemories} = useAppStore(state => state.memoryTimelineSlice)
+    const {isLinked} = useAppStore(state => state.authSlice)
     const [isLoading, setIsLoading] = useState(false)
 
     useEffect(() => {
         const verifyPartner = async () => {
-            // await SecureStore.setItemAsync("isLinked","false");
-            const isLinked = SecureStore.getItem("isLinked");
-
-            if (isLinked === "false") {
+            console.log("isLinked")
+            console.log(isLinked)
+            if (!isLinked) {
                 setTimeout(() => {
                     navigation.dispatch(StackActions.replace("noPartnerScreen"))
                 }, 50)

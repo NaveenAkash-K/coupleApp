@@ -8,13 +8,11 @@ import CustomTextInput from "../../components/common/CustomTextInput";
 import PrimaryButton from "../../components/common/PrimaryButton";
 import getSentInvitationsAPI from "../../apis/common/invitations/getSentInvitationsAPI";
 import getReceivedInvitationsAPI from "../../apis/common/invitations/getReceivedInvitationsAPI";
-import * as SecureStorage from "expo-secure-store";
 import sendInvitationAPI from "../../apis/common/invitations/sendInvitationAPI";
 import acceptInvitationAPI from "../../apis/common/invitations/acceptInvitationAPI";
 import rejectInvitation from "../../apis/common/invitations/rejectInvitation";
 import Toast from "react-native-toast-message";
 import {StackActions, useNavigation} from "@react-navigation/native";
-import * as SecureStore from "expo-secure-store";
 import useAppStore from "../../store/useAppStore";
 import checkLinkedStatus from "../../apis/common/invitations/checkLinkedStatusAPI";
 import cancelInvitationAPI from "../../apis/common/invitations/cancelInvitationAPI";
@@ -27,6 +25,7 @@ const NoPartnerScreen = (props) => {
     const [loading, setLoading] = useState(false);
     const [invitation, setInvitation] = useState();
     const navigation = useNavigation();
+    const {modifyAuthSlice, inviteId} = useAppStore(state => state.authSlice);
 
     useEffect(() => {
         checkInviteStatus();
@@ -36,7 +35,7 @@ const NoPartnerScreen = (props) => {
         let response = await checkLinkedStatus();
 
         if (!(response.data.couple === null)) {
-            await SecureStore.setItemAsync("isLinked", "true");
+            modifyAuthSlice("isLinked", true)
             setStatus("none")
             setInvitation(null)
             navigation.dispatch(StackActions.replace("memoryTimelineScreen"))
@@ -76,7 +75,7 @@ const NoPartnerScreen = (props) => {
     const handleAccept = async () => {
         try {
             const response = await acceptInvitationAPI({invitationId: invitation._id});
-            await SecureStore.setItemAsync("isLinked", "true");
+            modifyAuthSlice("isLinked", true)
             setStatus("none")
             setInvitation(null)
             navigation.dispatch(StackActions.replace("memoryTimelineScreen"))
@@ -138,7 +137,7 @@ const NoPartnerScreen = (props) => {
                             Your Invite ID
                         </Text>
                         <Text
-                            style={[TextStyle.titleLarge, TextStyle.bold]}>{SecureStorage.getItem("inviteId")}</Text>
+                            style={[TextStyle.titleLarge, TextStyle.bold]}>{inviteId}</Text>
                     </View>
                 </View>
                 <View style={{marginTop: 10, gap: 20, flex: 1}}>

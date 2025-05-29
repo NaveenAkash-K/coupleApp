@@ -15,22 +15,22 @@ const OtpSignupScreen = () => {
     const [otp, setOtp] = useState("")
     const navigation = useNavigation();
     const [isOtpVerifyLoading, setIsOtpVerifyLoading] = useState(false)
-    const {setAuthState} = useAppStore(state => state.authSlice);
+    const {userId, modifyAuthSlice} = useAppStore(state => state.authSlice);
 
     const handleOtpVerify = async () => {
         try {
             setIsOtpVerifyLoading(true)
             const response = await verifyOtpAPI({
-                userId: await SecureStore.getItemAsync("userId"),
+                userId: userId,
                 otp
             })
             await SecureStore.setItemAsync("jwt", response.data.token);
-            await SecureStore.setItemAsync("userId", response.data.user._id);
-            await SecureStore.setItemAsync("inviteId", response.data.user.inviteId);
-            await SecureStore.setItemAsync("username", response.data.user.username);
-            await SecureStore.setItemAsync("isLinked", response.data.user.isLinked.toString());
+            modifyAuthSlice("userId",response.data.user._id)
+            modifyAuthSlice("inviteId", response.data.user.inviteId)
+            modifyAuthSlice("username", response.data.user.username)
+            modifyAuthSlice("isLinked", response.data.user.isLinked)
+            modifyAuthSlice("isLoggedIn", true)
             navigation.navigate("loginScreen")
-            setAuthState(true);
             Toast.show({
                 type: 'success',
                 text1: response.data.message,

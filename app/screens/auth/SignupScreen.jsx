@@ -10,6 +10,7 @@ import CustomTextInput from "../../components/common/CustomTextInput";
 import React, {useState} from "react";
 import Toast from "react-native-toast-message";
 import * as SecureStore from "expo-secure-store";
+import useAppStore from "../../store/useAppStore";
 
 const SignupScreen = () => {
     const navigation = useNavigation();
@@ -18,6 +19,7 @@ const SignupScreen = () => {
     const [password, setPassword] = useState("")
     const [confirmPassword, setConfirmPassword] = useState("")
     const [isSignupLoading, setIsSignupLoading] = useState(false)
+    const {modifyAuthSlice} = useAppStore(state => state.authSlice);
 
     const handleSignup = async () => {
         try {
@@ -25,7 +27,8 @@ const SignupScreen = () => {
             const response = await signupAPI({
                 username, email, password, confirmPassword
             })
-            await SecureStore.setItemAsync("userId", response.data.userId);
+
+            modifyAuthSlice("userId",response.data.userId)
             navigation.dispatch(StackActions.replace("otpSignupScreen"))
 
         } catch (e) {
