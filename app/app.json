@@ -21,7 +21,6 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true,
       "package": "com.naveenakash.MemoryNest"
     },
     "web": {
@@ -30,6 +29,11 @@
     "plugins": [
       "expo-font",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0f9188a0-df2a-4611-b355-13e1fdb44d91"
+      }
+    }
   }
 }

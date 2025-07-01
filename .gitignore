@@ -11,3 +11,4 @@
 /app/.expo
 /app/package-lock.json
 /app/.env
+/app/eas.json
